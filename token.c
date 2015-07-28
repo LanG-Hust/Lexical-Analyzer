@@ -8,9 +8,10 @@ int main()
     while(!feof(fin))
     {
         fgets(line_buf, MAX, fin);
-        printf("%s",line_buf);
+        printf("%s\n",line_buf);
         while(token_analyze(line_buf) == true)
         {
+//            printf("check: %s", gtoken);
             // 判断是标识符还是关键字
             if(gtypecode == 1)
             {
@@ -37,9 +38,10 @@ int main()
             //    
             //}
             
+            printf("Token:%s\tType:%s\tType_Code:%d\n", gtoken, gtype, gtypecode);
         }
+//        printf("check | gtoken:%s", gtoken);
 //        write_file();
-        printf("Token:%s\tType%s\tType_Code:%d\n", gtoken, gtype, gtypecode);
     }
 }
 
@@ -48,7 +50,8 @@ bool ident_or_key(char * token)
    int i = 0;
    for(i = 0; i < N; i++)
    {
-       if(strcmp(gkeyws_array[i], token))
+//       printf("check: %s\t%s\n",gkeyws_array[i], token);
+       if(strcmp(gkeyws_array[i], token) == 0) // if 2 strings are identical, the STRCMP() return 0;
            return true;
    }
    return false;
@@ -70,7 +73,10 @@ bool token_analyze(char *line)
     char ch ;
 
     if(line[i] == '\n')
+    {
+        i = 0;
         return false;
+    }
     while(state < 1 || state > 6)
     {
         ch = line[i];
@@ -102,6 +108,7 @@ bool token_analyze(char *line)
         }
         i++;
     }
+    // 重置state
         state = 0;
 //    gtypecode = state;
     return true;
