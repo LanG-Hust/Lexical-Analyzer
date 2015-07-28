@@ -12,7 +12,7 @@
 
 typedef struct NODE 
 {
-    char *ptoken;
+    char *ps;
     int cnt;
     struct NODE *pnext;
 }node;
@@ -39,4 +39,5 @@ bool sep_or_ope(char *token);
 bool ident_or_key(char *token);
 // true : not a '\n' false : reach '\n'
 bool token_analyze(char *line);
-void counter(const char* token, node *phead);
+void counter(const char* token, node **phead);
+node *new_node();

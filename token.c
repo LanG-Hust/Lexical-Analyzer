@@ -4,10 +4,14 @@ int main()
 {
     initial();
     char line_buf[120] = {0};
-
+    node *pid_kw = NULL;
+    int row = 0;
+    
     while(!feof(fin))
     {
         fgets(line_buf, MAX, fin);
+        row++;
+        grow = row;
         printf("%s\n",line_buf);
         while(token_analyze(line_buf) == true)
         {
@@ -27,22 +31,54 @@ int main()
                }
             }
 
-            //node* ptemp = NULL;
+//            node *ptemp = NULL;
 
-            //switch(typecode)
-            //{
-            //    case 1:
-            //        ptemp = pidkw;
-            //        counter(gtoken, ptemp);
-            //        break;
-            //    
-            //}
+            switch(gtypecode)
+            {
+                case 1:
+                    counter(gtoken, &pid_kw);
+                    break;
+                
+            }
             
-            printf("Token:%s\tType:%s\tType_Code:%d\n", gtoken, gtype, gtypecode);
+            printf("Token:%s\tType:%s\tType_Code:%d\tCount:%d\tRow:%d\tCol:%d\n", gtoken, gtype, gtypecode, gcnt, grow, gcol);
         }
 //        printf("check | gtoken:%s", gtoken);
 //        write_file();
     }
+}
+
+void counter(const char *token, node **pphd)
+{
+    node *ptemp = NULL;
+//    char buf[50] = {0};
+    int flag = 0;
+    node *phead = *pphd;
+
+    for(ptemp = phead; ptemp != NULL; ptemp = ptemp->pnext)
+    {
+        if(0 == strcmp(token, ptemp->ps))
+        {
+            flag = 1;
+            break;
+        }
+    }
+    if(flag == 0)
+    {
+        ptemp = new_node();
+        ptemp->pnext = phead;
+        phead = ptemp;
+        int len = strlen(token);
+        ptemp->ps = malloc(sizeof(len + 1));
+        strcpy(ptemp->ps, token);
+    }
+    else
+    {
+        ptemp->cnt ++;
+    }
+    gcnt = ptemp->cnt;    
+    *pphd = phead;
+    return ;
 }
 
 bool ident_or_key(char * token)
@@ -56,6 +92,15 @@ bool ident_or_key(char * token)
    }
    return false;
 }
+
+node *new_node()
+{
+   node *ptemp = malloc(sizeof(node));
+   ptemp->cnt = 1;
+   ptemp->pnext = NULL;
+   return ptemp;
+}
+
 void initial()
 {
     // prepare the file
@@ -77,9 +122,15 @@ bool token_analyze(char *line)
         i = 0;
         return false;
     }
+    
+
     while(state < 1 || state > 6)
     {
         ch = line[i];
+        if(state == 0)
+        {
+            gcol = i + 1;
+        }
         switch(state)
         {
             case 0:
