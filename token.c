@@ -4,7 +4,14 @@ int main()
 {
     initial();
     char line_buf[120] = {0};
+
+    // the following are the heads of lists
     node *pid_kw = NULL;
+    node *pint_flt = NULL;
+    node *pchar = NULL;
+    node *pstr = NULL;
+    node *psgn = NULL;
+
     int row = 0;
     
     while(!feof(fin))
@@ -16,7 +23,7 @@ int main()
         while(token_analyze(line_buf) == true)
         {
 //            printf("check: %s", gtoken);
-            // 判断是标识符还是关键字
+            // 判断是标识符还是关键字, 在gtype内写下token类型
             if(gtypecode == 1)
             {
                if(ident_or_key(gtoken) == true)
@@ -31,14 +38,40 @@ int main()
                }
             }
 
-//            node *ptemp = NULL;
+            else if(gtypecode == 6)
+            {
+                if(sep_or_ope(gtoken) == true)
+                {
+                    strcpy(gtype, gtype_array[2]);
+
+                }
+                else
+                {
+                    strcpy(gtype, gtype_array[3]);
+                }
+            }
+
+            else if(gtypecode == 2)
+                strcpy(gtype, gtype_array[4]);
+            else if(gtypecode == 3)
+                strcpy(gtype, gtype_array[5]);
+
+
 
             switch(gtypecode)
             {
                 case 1:
                     counter(gtoken, &pid_kw);
                     break;
-                
+
+                case 2: 
+                case 3:
+                    counter(gtoken, &pint_flt);
+                    break;
+
+                    case 6: 
+                    counter(gtoken, &psgn);
+                    break;
             }
             
             printf("Token:%s\tType:%s\tType_Code:%d\tCount:%d\tRow:%d\tCol:%d\n", gtoken, gtype, gtypecode, gcnt, grow, gcol);
@@ -46,6 +79,7 @@ int main()
 //        printf("check | gtoken:%s", gtoken);
 //        write_file();
     }
+    return 0;
 }
 
 void counter(const char *token, node **pphd)
@@ -57,10 +91,21 @@ void counter(const char *token, node **pphd)
 
     for(ptemp = phead; ptemp != NULL; ptemp = ptemp->pnext)
     {
-        if(0 == strcmp(token, ptemp->ps))
+        if(gtypecode != 2 && gtypecode != 3)
         {
-            flag = 1;
-            break;
+            if( 0 == strcmp(token, ptemp->ps))
+            {
+                flag = 1;
+                break;
+            }
+        }
+        else 
+        {
+            if(atof(token) == atof(ptemp->ps))
+            {
+                flag = 1;
+                break;
+            }
         }
     }
     if(flag == 0)
@@ -81,10 +126,23 @@ void counter(const char *token, node **pphd)
     return ;
 }
 
+// true : operator    false : separator
+bool sep_or_ope(char *token)
+{
+   int i = 0;
+   for(i = 0; i < LEN_SEP ; i++)
+   {
+       if(strcmp(gsep_array[i], token) == 0) // if 2 strings are identical, the STRCMP() return 0;
+           return false;
+   }
+   return true;
+    
+}
+
 bool ident_or_key(char * token)
 {
    int i = 0;
-   for(i = 0; i < N; i++)
+   for(i = 0; i < LEN_KWD ; i++)
    {
 //       printf("check: %s\t%s\n",gkeyws_array[i], token);
        if(strcmp(gkeyws_array[i], token) == 0) // if 2 strings are identical, the STRCMP() return 0;
@@ -139,6 +197,12 @@ bool token_analyze(char *line)
                     state = 8;
                     gtoken[j++] = ch;
                 }
+
+                if(isdigit(ch))
+                {
+                    state = 9;
+                    gtoken[j++] = ch;
+                }
                 break;
             
             case 8:
@@ -156,6 +220,58 @@ bool token_analyze(char *line)
                 }
                 break; 
             
+            case 9:
+                if(isdigit(ch))
+                {
+                    state = 9;
+                    gtoken[j++] = ch;
+                }
+
+                else if(ch == '.')
+                {
+                    state = 10;
+                    gtoken[j++] = ch;
+                }
+
+                else
+                {
+                    state = 2;
+                    gtypecode = 2;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break; 
+
+            case 10:
+                if(isdigit(ch))
+                {
+                    state = 11;
+                    gtoken[j++] = ch;
+                }
+                else
+                {
+                    state = 3;
+                    gtypecode = 3;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break; 
+
+            case 11:
+                if(isdigit(ch))
+                {
+                    state = 11;
+                    gtoken[j++] = ch;
+                }
+                else
+                {
+                    state = 3;
+                    gtypecode = 3;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break; 
+                
         }
         i++;
     }
