@@ -19,8 +19,8 @@ int main()
         fgets(line_buf, MAX, fin);
         row++;
         grow = row;
-        printf("%s\n",line_buf);
-        while(token_analyze(line_buf) == true)
+//        printf("%s\n",line_buf);
+        while(token_analyze(line_buf) == true) // token_analyze() 分析出词，词性（以code形式），列数
         {
 //            printf("check: %s", gtoken);
             // 判断是标识符还是关键字, 在gtype内写下token类型
@@ -37,24 +37,28 @@ int main()
                     strcpy(gtype, gtype_array[1]);
                }
             }
-
-            else if(gtypecode == 6)
-            {
-                if(sep_or_ope(gtoken) == true)
-                {
-                    strcpy(gtype, gtype_array[2]);
-
-                }
-                else
-                {
-                    strcpy(gtype, gtype_array[3]);
-                }
-            }
-
             else if(gtypecode == 2)
                 strcpy(gtype, gtype_array[4]);
             else if(gtypecode == 3)
                 strcpy(gtype, gtype_array[5]);
+
+            else if(gtypecode == 6)
+            {
+                strcpy(gtype, gtype_array[3]);
+//                if(sep_or_ope(gtoken) == true)
+//                {
+//                    strcpy(gtype, gtype_array[2]);
+//
+//                }
+//                else
+//                {
+//                    strcpy(gtype, gtype_array[3]);
+//                }
+            }
+            else if(gtypecode == 7)
+            {
+                strcpy(gtype, gtype_array[2]);
+            } 
 
 
 
@@ -69,12 +73,12 @@ int main()
                     counter(gtoken, &pint_flt);
                     break;
 
-                    case 6: 
+                case 6: case 7:
                     counter(gtoken, &psgn);
                     break;
             }
-            
-            printf("Token:%s\tType:%s\tType_Code:%d\tCount:%d\tRow:%d\tCol:%d\n", gtoken, gtype, gtypecode, gcnt, grow, gcol);
+            if(gtypecode != -1)         
+                printf("Token:%s\tType:%s\tType_Code:%d\tCount:%d\tRow:%d\tCol:%d\n", gtoken, gtype, gtypecode, gcnt, grow, gcol);
         }
 //        printf("check | gtoken:%s", gtoken);
 //        write_file();
@@ -153,8 +157,8 @@ bool ident_or_key(char * token)
 
 node *new_node()
 {
-   node *ptemp = malloc(sizeof(node));
-   ptemp->cnt = 1;
+    node *ptemp = malloc(sizeof(node));
+    ptemp->cnt = 1;
    ptemp->pnext = NULL;
    return ptemp;
 }
@@ -182,9 +186,14 @@ bool token_analyze(char *line)
     }
     
 
-    while(state < 1 || state > 6)
+    while(state < 1 || state > 7)
     {
         ch = line[i];
+        if(ch == '\n')
+        {
+            i = 0;
+            return false;
+        }
         if(state == 0)
         {
             gcol = i + 1;
@@ -197,12 +206,73 @@ bool token_analyze(char *line)
                     state = 8;
                     gtoken[j++] = ch;
                 }
-
-                if(isdigit(ch))
+                else if(isdigit(ch))
                 {
                     state = 9;
                     gtoken[j++] = ch;
                 }
+                else if(ch == '.')
+                {
+                    state = 22;
+                    gtoken[j++] = ch;
+                } 
+                // separator
+                else if(ch == ';' || ch == '{'|| ch == '}')
+                {
+                    state = 6;
+                    gtypecode = 6;
+                    gtoken[j++] = ch;
+                    gtoken[j++] = '\0';
+                }
+                // operator
+                else if(ch == '[' || ch == ']'|| ch == '('|| ch == ')')
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j++] = ch;
+                    gtoken[j++] = '\0';
+                }
+                else if( ch == '+')
+                {
+                    state = 14;
+                    gtoken[j++] = ch;
+                } 
+                else if(ch == '=' ||ch == '!' ||ch == '^' ||ch == '*' ||ch == '%'  )
+                {
+                    state = 24;
+                    gtoken[j++] = ch;
+                }
+                else if(ch == '&')
+                {
+                    state = 26;
+                    gtoken[j++] = ch;
+                }
+                else if(ch == '|')
+                {
+                    state = 28;
+                    gtoken[j++] = ch;
+                } 
+                else if(ch == '<')
+                {
+                    state = 30;
+                    gtoken[j++] = ch;
+                } 
+                else if(ch == '>')
+                {
+                    state = 32;
+                    gtoken[j++] = ch;
+                } 
+                else if(ch == '-')
+                {
+                    state = 34;
+                    gtoken[j++] = ch;
+                } 
+                else if(ch == '/')
+                {
+                    state = 36;
+                    gtoken[j++] = ch;
+                } 
+
                 break;
             
             case 8:
@@ -271,7 +341,177 @@ bool token_analyze(char *line)
                     i--;
                 }
                 break; 
+            case 14:
+                if(ch == '+' || ch == '=')
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
+                }
+                else
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break;
+                    
+            case 22:
+                if(isdigit(ch))
+                {
+                    state = 11;
+                    gtoken[j++] = ch;
+                }
+                else
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break;
+
+            case 24:
+                if(ch == '=')
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
+                }
+                else
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break;
+
+            case 26:
+                if(ch == '&')
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
+                }
+                else
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break;
+            case 28:
+                if(ch == '|')
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
+                }
+                else
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break;
+            case 30:
+                if(ch == '<' || ch == '=')
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
+                }
+                else
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break;
+            case 32:
+                if(ch == '>' || ch == '=')
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
+                }
+                else
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break;
+            case 34:
+                if(ch == '>' || ch == '=' || ch == '-')
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
+                }
+                else
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break;
+            case 36:
+                if(ch == '=')
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
+                }
+                else if(ch == '/')
+                {
+                    state = 0;
+                    i = 0;
+                    return false;
+                }
+                else if(ch == '*')
+                {
+                    state = 37;
+                    gtypecode = -1;
+                }
+                else
+                {
+                    state = 7;
+                    gtypecode = 7;
+                    gtoken[j] = '\0';
+                    i--;
+                }
+                break;
+
+            case 37:
+                if(ch == '*')
+                    state = 38;
+                break;
                 
+            case 38:
+                if(ch == '/')
+                    state = 0;
+                else
+                {
+                    state = 37;
+                    i--;
+                }
+                break;
         }
         i++;
     }
