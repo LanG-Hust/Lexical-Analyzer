@@ -19,10 +19,9 @@ int main(int argc, char *argv[])
         fgets(line_buf, MAX, fin);
         row++;
         grow = row;
-//        printf("%s\n",line_buf);
+
         while(token_analyze(line_buf) == true) // token_analyze() 分析出词，词性（以code形式），列数
         {
-//            printf("check: %s", gtoken);
             // 判断是标识符还是关键字, 在gtype内写下token类型
             if(gtypecode == 1)
             {
@@ -49,15 +48,6 @@ int main(int argc, char *argv[])
             else if(gtypecode == 6)
             {
                 strcpy(gtype, gtype_array[3]);
-//                if(sep_or_ope(gtoken) == true)
-//                {
-//                    strcpy(gtype, gtype_array[2]);
-//
-//                }
-//                else
-//                {
-//                    strcpy(gtype, gtype_array[3]);
-//                }
             }
             else if(gtypecode == 7)
             {
@@ -85,7 +75,8 @@ int main(int argc, char *argv[])
                     counter(gtoken, &pstr);
                     break;
 
-                case 6: case 7:
+                case 6:
+                case 7:
                     counter(gtoken, &psgn);
                     break;
             }
@@ -96,8 +87,6 @@ int main(int argc, char *argv[])
                 gorder++;
             }
         }
-//        printf("check | gtoken:%s", gtoken);
-//        write_file();
     }
     return 0;
 }
@@ -105,7 +94,6 @@ int main(int argc, char *argv[])
 void counter(const char *token, node **pphd)
 {
     node *ptemp = NULL;
-//    char buf[50] = {0};
     int flag = 0;
     node *phead = *pphd;
 
@@ -164,7 +152,6 @@ bool ident_or_key(char * token)
    int i = 0;
    for(i = 0; i < LEN_KWD ; i++)
    {
-//       printf("check: %s\t%s\n",gkeyws_array[i], token);
        if(strcmp(gkeyws_array[i], token) == 0) // if 2 strings are identical, the STRCMP() return 0;
            return true;
    }
@@ -618,8 +605,7 @@ bool token_analyze(char *line)
         i++;
     }
     // 重置state
-        state = 0;
-//    gtypecode = state;
+    state = 0;
     return true;
 }   
 
