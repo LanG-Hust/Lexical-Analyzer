@@ -1,8 +1,8 @@
 #include "token_head.h"
 
-int main()
+int main(int argc, char *argv[])
 {
-    initial();
+    initial(argc, argv[1]);
     char line_buf[120] = {0};
 
     // the following are the heads of lists
@@ -42,6 +42,10 @@ int main()
             else if(gtypecode == 3)
                 strcpy(gtype, gtype_array[5]);
 
+            else if(gtypecode == 4)
+                strcpy(gtype, gtype_array[6]);
+            else if(gtypecode == 5)
+                strcpy(gtype, gtype_array[7]);
             else if(gtypecode == 6)
             {
                 strcpy(gtype, gtype_array[3]);
@@ -73,12 +77,24 @@ int main()
                     counter(gtoken, &pint_flt);
                     break;
 
+                case 4:
+                    counter(gtoken, &pchar);
+                    break;
+
+                case 5:
+                    counter(gtoken, &pstr);
+                    break;
+
                 case 6: case 7:
                     counter(gtoken, &psgn);
                     break;
             }
-            if(gtypecode != -1)         
-                printf("Token:%s\tType:%s\tType_Code:%d\tCount:%d\tRow:%d\tCol:%d\n", gtoken, gtype, gtypecode, gcnt, grow, gcol);
+            if(gtypecode != -1 && !isnothing(gtoken))
+            { 
+                fprintf(fout,"\t%-8d%-16s%-25s%-7d%-6d%-6d\n", 
+                       gorder, gtype, gtoken, grow, gcol, gcnt);
+                gorder++;
+            }
         }
 //        printf("check | gtoken:%s", gtoken);
 //        write_file();
@@ -163,14 +179,46 @@ node *new_node()
    return ptemp;
 }
 
-void initial()
+void initial(int argc, char *file)
 {
-    // prepare the file
-    if((fin = fopen(in_file, "r")) == NULL)
+    // check the parameters
+    if(argc != 2)
     {
-        printf("Error: unable to open the %s\n", in_file);
+        printf("Error: Please enter 2 parameters\n");
         exit(-1);
     }
+    else
+    {
+        strcpy(gfile, file);
+    }
+    
+    // prepare the file
+    if((fin = fopen(gfile, "r")) == NULL)
+    {
+        printf("Error: unable to open the %s\n", in_file);
+        exit(-2);
+    }
+    // get the fout file name
+    int i = 0;
+    char out_file[33] = {0};
+    strcpy(out_file, file);
+    while(out_file[i] != '.')
+        i++;
+    out_file[++i] = 'L';
+    out_file[++i] = 'e';
+    out_file[++i] = 'x';
+    out_file[++i] = '\0';
+    // open the out file 
+    if((fout = fopen(out_file, "w")) == NULL)
+    {
+        printf("Error: unable to open the %s\n", out_file);
+        exit(-3);
+    }
+
+    // 打印表头，作者信息
+    fprintf(fout,"Copyright@ 高天林\t\tGithub @ https://github.com/LanG-Hust/Lexical-Analyzer\n");
+    fprintf(fout,"\t%-10s%-15s%-24s%-9s%-9s%-14s\n","序号","token类型", "token", "行号", "列号", "出现次数");
+    fprintf(fout,"\t---------------------------------------------------------------\n");
 }
 
 bool token_analyze(char *line)
@@ -225,7 +273,7 @@ bool token_analyze(char *line)
                     gtoken[j++] = '\0';
                 }
                 // operator
-                else if(ch == '[' || ch == ']'|| ch == '('|| ch == ')')
+                else if(ch == '[' || ch == ']'|| ch == '('|| ch == ')' || ch == ','|| ch == '?'|| ch == ':')
                 {
                     state = 7;
                     gtypecode = 7;
@@ -272,6 +320,17 @@ bool token_analyze(char *line)
                     state = 36;
                     gtoken[j++] = ch;
                 } 
+                else if(ch == '"')
+                {
+                    state = 40;
+                    gtoken[j++] = ch;
+                } 
+                else if(ch == '\'')
+                {
+                    state = 42;
+                    gtoken[j++] = ch;
+                } 
+                   
 
                 break;
             
@@ -303,6 +362,13 @@ bool token_analyze(char *line)
                     gtoken[j++] = ch;
                 }
 
+                else if(toupper(ch) == 'L')
+                {
+                    state = 2;
+                    gtypecode = 2;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
+                }
                 else
                 {
                     state = 2;
@@ -317,6 +383,13 @@ bool token_analyze(char *line)
                 {
                     state = 11;
                     gtoken[j++] = ch;
+                }
+                else if(toupper(ch) == 'F')
+                {
+                    state = 3;
+                    gtypecode = 3;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
                 }
                 else
                 {
@@ -512,6 +585,35 @@ bool token_analyze(char *line)
                     i--;
                 }
                 break;
+
+            case 40:
+                if(ch == '"')
+                {
+                    gtypecode = 5;
+                    state = 5;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
+                }
+                else
+                {
+                    gtoken[j++] = ch;
+                }
+                break;
+
+            case 42:
+                if(ch == '\'')
+                {
+                    gtypecode = 4;
+                    state = 4;
+                    gtoken[j++] = ch;
+                    gtoken[j] = '\0';
+                }
+                else
+                {
+                    gtoken[j++] = ch;
+                }
+                break;
+
         }
         i++;
     }
@@ -520,3 +622,15 @@ bool token_analyze(char *line)
 //    gtypecode = state;
     return true;
 }   
+
+bool isnothing(char *token)
+{
+    int i = 0;
+    while(token[i] != '\0')
+    {
+        if(!isspace(token[i]))
+            return false;
+        i++;
+    }
+    return true;
+}
