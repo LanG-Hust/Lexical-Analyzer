@@ -5,7 +5,7 @@
 #include <string.h>
 
 #define MAX 120
-#define LEN_KWD 17
+#define LEN_KWD 32
 #define LEN_SEP 3
 
 typedef struct NODE 
